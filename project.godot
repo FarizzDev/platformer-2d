@@ -83,6 +83,11 @@ stretch/mode="2d"
 
 singletons=[  ]
 
+[global]
+
+PV=false
+PVR=false
+
 [image_loader]
 
 repeat=false
