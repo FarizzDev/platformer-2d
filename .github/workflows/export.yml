@@ -125,6 +125,8 @@ jobs:
         env:
           SKIP_JDK_VERSION_CHECK: true
         uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: "9.0"
 
       - name: 📝 Get Keystore Paths
         if: env.ISANDROID == 'true'
