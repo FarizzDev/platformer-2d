@@ -146,11 +146,9 @@ jobs:
             mkdir -p "$(dirname "${{ env.RELEASE_KEYSTORE_PATH }}")"
             keytool -genkey -v -keystore "${{ env.RELEASE_KEYSTORE_PATH }}" -alias "${{ env.KEYSTORE_USER }}" -storepass "${{ env.KEYSTORE_PASS }}" -keypass "${{ env.KEYSTORE_PASS }}" -dname "CN=${{ env.DNAME }},O=${{ env.ORG }},C=${{ env.COUNTRY }}" -keyalg RSA -keysize 2048 -validity 10000
           fi
-          if [ "${{ env.DEBUG }}" = "true" ]; then
-            echo "Generating debug keystore at ${{ env.DEBUG_KEYSTORE_PATH }}"
-            mkdir -p "$(dirname "${{ env.DEBUG_KEYSTORE_PATH }}")"
-            keytool -genkey -v -keystore "${{ env.DEBUG_KEYSTORE_PATH }}" -alias androiddebugkey -storepass android -keypass android -dname "CN=${{ env.DNAME }} (Debug),O=Android,C=US" -keyalg RSA -keysize 2048 -validity 9000
-          fi
+          echo "Generating debug keystore at ${{ env.DEBUG_KEYSTORE_PATH }}"
+          mkdir -p "$(dirname "${{ env.DEBUG_KEYSTORE_PATH }}")"
+          keytool -genkey -v -keystore "${{ env.DEBUG_KEYSTORE_PATH }}" -alias androiddebugkey -storepass android -keypass android -dname "CN=${{ env.DNAME }} (Debug),O=Android,C=US" -keyalg RSA -keysize 2048 -validity 9000
 
       - name: 🛠 Export
         run: |
