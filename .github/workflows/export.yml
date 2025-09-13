@@ -192,8 +192,12 @@ jobs:
             done <<< "$presets"
 
           else
-            // CHANGE TARGET_PRESET to use PLATFORM instead
-            TARGET_PRESET="$PLATFORM"
+            TARGET_PRESET=$(awk -v ref="$PLATFORM" '
+              /^\[preset\./ { n=""; p="" }
+              /^name=/      { n=$0; gsub(/.*="/,"",n); gsub(/".*/,"",n) }
+              /^platform=/  { p=$0; gsub(/.*="/,"",p); gsub(/".*/,"",p) }
+              n==ref && p { print p; exit }
+            ' export_presets.cfg)
             subfolder=$(echo "$PLATFORM" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]' | sed 's|/x11||' | sed 's|android2|android|') # Normalize subfolder
             mkdir -p "export/$subfolder"
             
