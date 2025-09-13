@@ -122,6 +122,8 @@ jobs:
 
       - name: 📱 Set up Android SDK (Only for Android)
         if: env.ISANDROID == 'true'
+        env:
+          SKIP_JDK_VERSION_CHECK: true
         uses: android-actions/setup-android@v3
 
       - name: 📝 Get Keystore Paths
