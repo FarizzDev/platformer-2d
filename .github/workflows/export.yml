@@ -123,8 +123,8 @@ jobs:
       - name: 📱 Set up Android SDK (Only for Android)
         if: env.ISANDROID == 'true'
         uses: android-actions/setup-android@v3
-        with: # <-- UBAH KE BLOK INI
-          cmdline-tools-version: "9.0"
+        with:
+          cmdline-tools-version: "10.0"
 
       - name: 📝 Get Keystore Paths
         if: env.ISANDROID == 'true'
