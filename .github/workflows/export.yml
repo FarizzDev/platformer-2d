@@ -118,7 +118,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
-          java-version: "17"
+          java-version: "11"
 
       - name: 📱 Set up Android SDK (Only for Android)
         if: env.ISANDROID == 'true'
@@ -219,7 +219,7 @@ jobs:
               OUTPUT_PATH="export/macosx/${{ env.DNAME }}.zip"
             fi
             
-            godot $EXPORT_FLAG "$PLATFORM" "$OUTPUT_PATH"
+            godot --verbose $EXPORT_FLAG "$PLATFORM" "$OUTPUT_PATH"
           fi
 
           if [[ "$ISANDROID" == "true" && "${{ env.DEBUG }}" == "false" ]]; then
