@@ -221,7 +221,7 @@ jobs:
               OUTPUT_PATH="export/macosx/${{ env.DNAME }}.zip"
             fi
             
-            godot $EXPORT_FLAG "$TARGET_PRESET" "$OUTPUT_PATH"
+            godot $EXPORT_FLAG "$PLATFORM" "$OUTPUT_PATH"
           fi
 
           if [[ "$ISANDROID" == "true" && "${{ env.DEBUG }}" == "false" ]]; then
