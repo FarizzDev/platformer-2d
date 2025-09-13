@@ -70,11 +70,17 @@ jobs:
           else
             # Check if the selected preset is an Android preset
             ISANDROID=$(awk -v preset_name="$PLATFORM" '
-                BEGIN { FS = "[[:space:]]*=[[:space:]]*"; in_preset=0; is_android=0 }
-                /^\[preset\./ { if (is_android) { print "true"; exit }; in_preset=0; is_android=0 }
-                /name/ && $2 == preset_name { in_preset=1 }
-                in_preset && /platform/ && $2 == "Android" { is_android=1 }
-                END { if (is_android) print "true" }
+              BEGIN { FS = "[[:space:]]*=[[:space:]]*"; in_preset=0; is_android=0 }
+              /^\[preset\./ { in_preset=0 }
+              /^name[[:space:]]*=/ {
+                n=$2; gsub(/"/, "", n)
+                if (n == preset_name) in_preset=1
+              }
+              in_preset && /^platform[[:space:]]*=/ {
+                p=$2; gsub(/"/, "", p)
+                if (p == "Android") { is_android=1 }
+              }
+              END { if (is_android) print "true" }
             ' export_presets.cfg)
           fi
 
