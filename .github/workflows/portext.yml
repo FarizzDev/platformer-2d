@@ -44,7 +44,7 @@ jobs:
     env:
       GODOT_LINK: ${{ inputs.godot_link }}
       TEMPLATES_LINK: ${{ inputs.templates_link }}
-      PRESET_NAME: ${{ inputs.preset_name }}
+      PLATFORM: ${{ inputs.preset_name }}
       KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
       KEYSTORE_USER: ${{ secrets.KEYSTORE_USER }}
       DEBUG: ${{ inputs.debug }}
@@ -65,11 +65,11 @@ jobs:
           fi
 
           # Determine if any Android build is happening
-          if [ "$PRESET_NAME" = $'[ Export All Preset ]\u2063' ]; then
+          if [ "$PLATFORM" = "All" ]; then
             ISANDROID=$(grep -q 'platform="Android"' export_presets.cfg && echo "true")
           else
             # Check if the selected preset is an Android preset
-            ISANDROID=$(awk -v preset_name="$PRESET_NAME" '
+            ISANDROID=$(awk -v preset_name="$PLATFORM" '
               BEGIN { FS = "[[:space:]]*=[[:space:]]*"; in_preset=0; is_android=0 }
               /^\[preset\./ { in_preset=0 }
               /^name[[:space:]]*=/ {
@@ -113,16 +113,49 @@ jobs:
           mv ~/godot-templates/templates/* ~/.local/share/godot/templates/${{ env.VERSION }}/
           rm -rf ~/godot-templates
 
-      - name: ☕ Setup JDK (Only for Android)
+      - name: 📱 Set up JDK 17 (Only for Android)
         if: env.ISANDROID == 'true'
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
           java-version: "17"
 
-      - name: 📱 Setup Android SDK (Only for Android)
+      - name: 📱 Setup Android SDK v9.0 (Only for Android)
         if: env.ISANDROID == 'true'
-        uses: android-actions/setup-android@v3
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+        run: |
+          set -euo pipefail
+          echo ">>> Installing Android cmdline-tools v9"
+
+          mkdir -p "$ANDROID_HOME/cmdline-tools"
+          cd /tmp
+          curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -o cmdline-tools.zip
+          unzip -q cmdline-tools.zip -d "$ANDROID_HOME/cmdline-tools"
+          mv "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/v9.0"
+
+          # make v9.0 the default tools
+          echo "$ANDROID_HOME/cmdline-tools/v9.0/bin" >> $GITHUB_PATH
+          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
+
+          SDKMANAGER_CMD="$ANDROID_HOME/cmdline-tools/v9.0/bin/sdkmanager"
+          chmod +x "$SDKMANAGER_CMD"
+          echo "Using sdkmanager: $SDKMANAGER_CMD"
+          "$SDKMANAGER_CMD" --version
+
+          # install packages
+          "$SDKMANAGER_CMD" --sdk_root="$ANDROID_HOME" --install \
+            "platform-tools" "platforms;android-33" "build-tools;33.0.0"
+
+          # accept licenses (ignore broken pipe)
+          yes | "$SDKMANAGER_CMD" --sdk_root="$ANDROID_HOME" --licenses || true
+
+      - name: 📱 Set up JDK 11 (Only for Android)
+        if: env.ISANDROID == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "11"
 
       - name: 📝 Get Keystore Paths
         if: env.ISANDROID == 'true'
@@ -149,6 +182,8 @@ jobs:
           echo "Generating debug keystore at ${{ env.DEBUG_KEYSTORE_PATH }}"
           mkdir -p "$(dirname "${{ env.DEBUG_KEYSTORE_PATH }}")"
           keytool -genkey -v -keystore "${{ env.DEBUG_KEYSTORE_PATH }}" -alias androiddebugkey -storepass android -keypass android -dname "CN=${{ env.DNAME }} (Debug),O=Android,C=US" -keyalg RSA -keysize 2048 -validity 9000
+          cp "${{ env.RELEASE_KEYSTORE_PATH }}" android/build/release.keystore
+          cp "${{ env.DEBUG_KEYSTORE_PATH }}" android/build/debug.keystore
 
       - name: 🛠 Export
         run: |
@@ -169,7 +204,7 @@ jobs:
             if [[ "$format" == "1" ]]; then echo "aab"; else echo "apk"; fi
           }
 
-          if [ "$PRESET_NAME" = $'[ Export All Preset ]\u2063' ]; then
+          if [ "$PLATFORM" = "All" ]; then
             presets=$(awk '
               BEGIN { FS = "[[:space:]]*=[[:space:]]*" }
               /^\[preset\./ { if (n&&p) print n"|"p; n=""; p="" }
@@ -196,30 +231,30 @@ jobs:
             done <<< "$presets"
 
           else
-            PLATFORM=$(awk -v ref="$PRESET_NAME" '
+            TARGET_PRESET=$(awk -v ref="$PLATFORM" '
               /^\[preset\./ { n=""; p="" }
               /^name=/      { n=$0; gsub(/.*="/,"",n); gsub(/".*/,"",n) }
               /^platform=/  { p=$0; gsub(/.*="/,"",p); gsub(/".*/,"",p) }
               n==ref && p { print p; exit }
             ' export_presets.cfg)
-            subfolder=$(echo "$PRESET_NAME" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]' | sed 's|/x11||' | sed 's|android2|android|') # Normalize subfolder
+            subfolder=$(echo "$PLATFORM" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]' | sed 's|/x11||' | sed 's|android2|android|') # Normalize subfolder
             mkdir -p "export/$subfolder"
             
             OUTPUT_PATH="export/$subfolder/${{ env.DNAME }}"
-            if [[ "$PLATFORM" == "Android"* ]]; then
-              EXT=$(get_android_ext "$PLATFORM")
+            if [[ "$TARGET_PRESET" == "Android"* ]]; then
+              EXT=$(get_android_ext "$TARGET_PRESET")
               OUTPUT_PATH="export/android/${{ env.DNAME }}.$EXT"
-            elif [ "$PLATFORM" = "Windows Desktop" ]; then
+            elif [ "$TARGET_PRESET" = "Windows Desktop" ]; then
               OUTPUT_PATH="export/windows/${{ env.DNAME }}.exe"
-            elif [ "$PLATFORM" = "Linux/X11" ]; then
+            elif [ "$TARGET_PRESET" = "Linux/X11" ]; then
               OUTPUT_PATH="export/linux/${{ env.DNAME }}"
-            elif [ "$PLATFORM" = "HTML5" ]; then
+            elif [ "$TARGET_PRESET" = "HTML5" ]; then
               OUTPUT_PATH="export/html5/index.html"
-            elif [ "$PLATFORM" = "Mac OSX" ]; then
+            elif [ "$TARGET_PRESET" = "Mac OSX" ]; then
               OUTPUT_PATH="export/macosx/${{ env.DNAME }}.zip"
             fi
             
-            godot $EXPORT_FLAG "$PRESET_NAME" "$OUTPUT_PATH"
+            godot --verbose $EXPORT_FLAG "$PLATFORM" "$OUTPUT_PATH"
           fi
 
           if [[ "$ISANDROID" == "true" && "${{ env.DEBUG }}" == "false" ]]; then
