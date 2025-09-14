@@ -134,7 +134,10 @@ jobs:
           unzip -q cmdline-tools.zip -d "$ANDROID_HOME/cmdline-tools"
           mv "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/v9.0"
 
-          # gunakan langsung path absolut, biar gak ketabrak sdkmanager bawaan runner
+          # make v9.0 the default tools
+          echo "$ANDROID_HOME/cmdline-tools/v9.0/bin" >> $GITHUB_PATH
+          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
+
           SDKMANAGER_CMD="$ANDROID_HOME/cmdline-tools/v9.0/bin/sdkmanager"
           chmod +x "$SDKMANAGER_CMD"
           echo "Using sdkmanager: $SDKMANAGER_CMD"
@@ -144,8 +147,8 @@ jobs:
           "$SDKMANAGER_CMD" --sdk_root="$ANDROID_HOME" --install \
             "platform-tools" "platforms;android-33" "build-tools;33.0.0"
 
-          # accept licenses
-              yes | "$SDKMANAGER_CMD" --sdk_root="$ANDROID_HOME" --licenses || true
+          # accept licenses (ignore broken pipe)
+          yes | "$SDKMANAGER_CMD" --sdk_root="$ANDROID_HOME" --licenses || true
 
       - name: 📱 Set up JDK 11 (Only for Android)
         if: env.ISANDROID == 'true'
