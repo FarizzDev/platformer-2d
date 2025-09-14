@@ -125,18 +125,77 @@ jobs:
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
         run: |
-          mkdir -p $ANDROID_HOME/cmdline-tools/v9.0
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
-          unzip cmdline-tools.zip -d $ANDROID_HOME/cmdline-tools/v9.0
+          set -euo pipefail
+          echo ">>> Installing Android cmdline-tools (v9) to $ANDROID_HOME"
 
-          mv $ANDROID_HOME/cmdline-tools/v9.0/cmdline-tools/* $ANDROID_HOME/cmdline-tools/v9.0/
-          rm -rf $ANDROID_HOME/cmdline-tools/v9.0/cmdline-tools
+          # prepare dirs
+          mkdir -p "$ANDROID_HOME/cmdline-tools"
+          mkdir -p "$ANDROID_HOME/platform-tools"
 
-          echo "$ANDROID_HOME/cmdline-tools/v9.0/bin" >> $GITHUB_PATH
-          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
+          # download and extract
+          cd /tmp
+          URL="https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip"
+          echo "Downloading $URL ..."
+          curl -fsSL "$URL" -o cmdline-tools.zip
+          unzip -q cmdline-tools.zip -d "$ANDROID_HOME/cmdline-tools"
 
-          sdkmanager "platforms;android-33" "build-tools;33.0.0" "platform-tools"
-          yes | sdkmanager --licenses
+          # Normalize folder name: ensure we have v9.0 at $ANDROID_HOME/cmdline-tools/v9.0
+          if [ -d "$ANDROID_HOME/cmdline-tools/cmdline-tools" ]; then
+            mv "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/v9.0"
+          else
+            # find first child dir (some zips extract to a different name)
+            CHILD_DIR=$(find "$ANDROID_HOME/cmdline-tools" -maxdepth 1 -mindepth 1 -type d | head -n 1 || true)
+            if [ -n "$CHILD_DIR" ] && [ "$(basename "$CHILD_DIR")" != "v9.0" ]; then
+              mv "$CHILD_DIR" "$ANDROID_HOME/cmdline-tools/v9.0"
+            fi
+          fi
+
+          # If there's still nested cmdline-tools inside v9.0, flatten it
+          if [ -d "$ANDROID_HOME/cmdline-tools/v9.0/cmdline-tools" ]; then
+            mv "$ANDROID_HOME/cmdline-tools/v9.0/cmdline-tools/"* "$ANDROID_HOME/cmdline-tools/v9.0/" || true
+            rmdir "$ANDROID_HOME/cmdline-tools/v9.0/cmdline-tools" || true
+          fi
+
+          # create/refresh 'latest' symlink
+          ln -sfn "$ANDROID_HOME/cmdline-tools/v9.0" "$ANDROID_HOME/cmdline-tools/latest"
+
+          # make sdk tools available to next steps
+          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+
+          # debug: show layout
+          echo "=== Debug: SDK tree ==="
+          ls -la "$ANDROID_HOME" || true
+          ls -la "$ANDROID_HOME/cmdline-tools" || true
+          ls -la "$ANDROID_HOME/cmdline-tools/v9.0" || true
+          ls -la "$ANDROID_HOME/cmdline-tools/v9.0/bin" || true
+
+          # show which sdkmanager (may be available immediately because of GITHUB_PATH)
+          echo "which sdkmanager (may be empty if PATH not yet reloaded in this step):"
+          which sdkmanager || true
+
+          # choose sdkmanager path (fallback to explicit path if not found in PATH)
+          if command -v sdkmanager >/dev/null 2>&1; then
+            SDKMANAGER_CMD="sdkmanager"
+          else
+            SDKMANAGER_CMD="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          fi
+
+          echo "Using sdkmanager: $SDKMANAGER_CMD"
+          "$SDKMANAGER_CMD" --version || true
+
+          # install required packages and accept licenses
+          echo "Installing platform-tools, platforms;android-33, build-tools;33.0.0 ..."
+          yes | "$SDKMANAGER_CMD" --sdk_root="$ANDROID_HOME" "platform-tools" "platforms;android-33" "build-tools;33.0.0"
+
+          echo "Accepting licenses..."
+          yes | "$SDKMANAGER_CMD" --sdk_root="$ANDROID_HOME" --licenses || true
+
+          echo "=== Post-install check ==="
+          ls -la "$ANDROID_HOME/platform-tools" || true
+          ls -la "$ANDROID_HOME/build-tools" || true
+
+          echo "Done."
 
       - name: 📝 Get Keystore Paths
         if: env.ISANDROID == 'true'
