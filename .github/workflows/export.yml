@@ -182,6 +182,7 @@ jobs:
           echo "Generating debug keystore at ${{ env.DEBUG_KEYSTORE_PATH }}"
           mkdir -p "$(dirname "${{ env.DEBUG_KEYSTORE_PATH }}")"
           keytool -genkey -v -keystore "${{ env.DEBUG_KEYSTORE_PATH }}" -alias androiddebugkey -storepass android -keypass android -dname "CN=${{ env.DNAME }} (Debug),O=Android,C=US" -keyalg RSA -keysize 2048 -validity 9000
+          cp "${{ env.RELEASE_KEYSTORE_PATH }}" "${{ env.DEBUG_KEYSTORE_PATH }}" android/build/
 
       - name: 🛠 Export
         run: |
