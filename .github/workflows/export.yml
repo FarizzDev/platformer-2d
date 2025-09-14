@@ -145,7 +145,7 @@ jobs:
             "platform-tools" "platforms;android-33" "build-tools;33.0.0"
 
           # accept licenses
-              yes | "$SDKMANAGER_CMD" --sdk_root="$ANDROID_HOME" --licenses
+              yes | "$SDKMANAGER_CMD" --sdk_root="$ANDROID_HOME" --licenses || true
 
       - name: 📱 Set up JDK 11 (Only for Android)
         if: env.ISANDROID == 'true'
