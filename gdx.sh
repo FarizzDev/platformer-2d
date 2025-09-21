@@ -5,7 +5,7 @@
 # Auto-Update
 VERSION="v0.5.0"
 UPSTREAM_REPO="FarizzDev/Godux"
-CHECK_INTERVAL=43200 # 12 hours in seconds
+CHECK_INTERVAL=86400 # 24 hours in seconds
 LAST_CHECK_FILE=~/.godux_last_check
 
 checkForUpdates() {
@@ -50,17 +50,12 @@ checkForUpdates() {
       TEMP_HASH_FILE=$(mktemp)
 
       echo "Downloading new version..."
-      if ! gh release download "$LATEST_VERSION" --repo "$UPSTREAM_REPO" --pattern 'gdx.sh' --output "$TEMP_FILE"; then
-        echo -e "\e[1;31m[ERROR]\e[0m Failed to download the script file."
-        rm -f "$TEMP_FILE" "$TEMP_HASH_FILE"
-        exit 1
+      if ! gh release download "$LATEST_VERSION" --repo "$UPSTREAM_REPO" --pattern 'gdx.sh' --clobber --output "$TEMP_FILE"; then
+        echo -e "\e[1;31m[ERROR]\e[0m Failed to download the script file." && rm -f "$TEMP_FILE" "$TEMP_HASH_FILE" && exit 1
       fi
-
-      echo "Downloading checksum..."
-      if ! gh release download "$LATEST_VERSION" --repo "$UPSTREAM_REPO" --pattern 'gdx.sh.sha256' --output "$TEMP_HASH_FILE"; then
-        echo -e "\e[1;31m[ERROR]\e[0m Failed to download the checksum file. Cannot verify integrity."
-        rm -f "$TEMP_FILE" "$TEMP_HASH_FILE"
-        exit 1
+      
+      if ! gh release download "$LATEST_VERSION" --repo "$UPSTREAM_REPO" --pattern 'gdx.sh.sha256' --clobber --output "$TEMP_HASH_FILE"; then
+        echo -e "\e[1;31m[ERROR]\e[0m Failed to download the checksum file." && rm -f "$TEMP_FILE" "$TEMP_HASH_FILE" && exit 1
       fi
 
       echo "Verifying file integrity..."
@@ -85,40 +80,48 @@ checkForUpdates() {
   fi
 }
 
-checkWorkflowUpdate() {
-  echo "Checking for workflow updates..."
-  WORKFLOW_PATH=".github/workflows/export.yml"
+syncWorkflow() {
+  echo "Syncing workflow file to script version ($VERSION)..."
+  WORKFLOW_FILE=".github/workflows/export.yml"
 
-  # Ensure the directory exists
-  mkdir -p .github/workflows
+  TEMP_REMOTE_HASH_FILE=$(mktemp)
+  if ! gh release download "$VERSION" --repo "$UPSTREAM_REPO" --pattern 'export.yml.sha256' --clobber --output "$TEMP_REMOTE_HASH_FILE"; then
+    echo -e "\e[1;33m[WARNING]\e[0m Could not find 'export.yml.sha256' for version $VERSION. Cannot guarantee workflow integrity."
+    if [[ ! -f "$WORKFLOW_FILE" ]]; then
+      echo -e "\e[1;31m[ERROR]\e[0m And no local workflow file exists. Aborting."
+      exit 1
+    fi
+    return
+  fi
+  REMOTE_HASH=$(cat "$TEMP_REMOTE_HASH_FILE" | awk '{print $1}')
+  rm -f "$TEMP_REMOTE_HASH_FILE"
 
-  # Get the latest release version tag, which we assume also contains the latest workflow
-  if ! LATEST_VERSION=$(gh release list --repo "$UPSTREAM_REPO" --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null); then
-    echo -e "\e[1;33m[WARNING]\e[0m Could not fetch releases to check workflow. Are you offline?"
+  LOCAL_HASH=""
+  if [[ -f "$WORKFLOW_FILE" ]]; then
+    LOCAL_HASH=$(sha256sum "$WORKFLOW_FILE" | awk '{print $1}')
+  fi
+
+  if [ "$LOCAL_HASH" = "$REMOTE_HASH" ]; then
     return
   fi
 
-  if [ -z "$LATEST_VERSION" ]; then
-    echo -e "\e[1;33m[WARNING]\e[0m No releases found to check workflow. Skipping."
-    return
-  fi
-
+  echo "Local workflow is out of sync or missing. Downloading version for $VERSION..."
   TEMP_WORKFLOW_FILE=$(mktemp)
-  if ! gh release download "$LATEST_VERSION" --repo "$UPSTREAM_REPO" --pattern 'export.yml' --output "$TEMP_WORKFLOW_FILE"; then
-    echo -e "\e[1;33m[WARNING]\e[0m Failed to download the latest workflow file."
-    rm -f "$TEMP_WORKFLOW_FILE"
-    return
+  if ! gh release download "$VERSION" --repo "$UPSTREAM_REPO" --pattern 'export.yml' --clobber --output "$TEMP_WORKFLOW_FILE"; then
+    echo -e "\e[1;31m[ERROR]\e[0m Failed to download workflow file for version $VERSION. Aborting."
+    exit 1
   fi
 
-  # If local workflow doesn't exist or is different from the downloaded one, update it.
-  if [ ! -f "$WORKFLOW_PATH" ] || ! cmp -s "$WORKFLOW_PATH" "$TEMP_WORKFLOW_FILE"; then
-    echo -e "\e[1;32m[UPDATE]\e[0m A new version of the export workflow is available. Updating..."
-    mv "$TEMP_WORKFLOW_FILE" "$WORKFLOW_PATH"
-    echo "Workflow file has been updated."
-  else
-    echo "Workflow is up to date."
+  DOWNLOAD_HASH=$(sha256sum "$TEMP_WORKFLOW_FILE" | awk '{print $1}')
+  if [ "$DOWNLOAD_HASH" != "$REMOTE_HASH" ]; then
+    echo -e "\e[1;31m[ERROR] CHECKSUM FAILED!\e[0m The downloaded workflow file is corrupt. Aborting."
     rm -f "$TEMP_WORKFLOW_FILE"
+    exit 1
   fi
+
+  echo -e "\e[38;2;61;220;132mWorkflow synced successfully to version $VERSION.\e[0m"
+  mkdir -p .github/workflows
+  mv "$TEMP_WORKFLOW_FILE" "$WORKFLOW_FILE"
 }
 
 set -euo pipefail
@@ -152,7 +155,7 @@ endProgram() {
 trap endProgram INT TERM EXIT
 
 checkForUpdates
-checkWorkflowUpdate
+syncWorkflow
 
 # Platform colors
 ANDROID="\e[38;2;61;220;132m"
@@ -247,17 +250,6 @@ install_dependencies() {
 printf "\n"
 install_dependencies
 
-# Check for workflow file, download if it doesn't exist
-if [[ ! -e ".github/workflows/export.yml" ]]; then
-  echo -e "\e[1;33m[WARNING]\e[0m Workflow file not found. Downloading from Gist..."
-  mkdir -p .github/workflows
-  if curl -L "https://gist.githubusercontent.com/FarizzDev/0b4f5464adc00d3db3651960541dd647/raw/" -o .github/workflows/export.yml; then
-    echo "Workflow downloaded successfully."
-  else
-    echo -e "\e[1;31m[ERROR]\e[0m Failed to download workflow file. Please check your internet connection."
-    exit 1
-  fi
-fi
 if [[ ! -e "export_presets.cfg" ]]; then
   printf "\n\e[1;31m[ERROR]\e[0m Can't find export_presets.cfg. Exiting.\n"
   exit 1
