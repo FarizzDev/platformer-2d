@@ -51,11 +51,16 @@ checkForUpdates() {
 
       echo "Downloading new version..."
       if ! gh release download "$LATEST_VERSION" --repo "$UPSTREAM_REPO" --pattern 'gdx.sh' --clobber --output "$TEMP_FILE"; then
-        echo -e "\e[1;31m[ERROR]\e[0m Failed to download the script file." && rm -f "$TEMP_FILE" "$TEMP_HASH_FILE" && exit 1
+        echo -e "\e[1;31m[ERROR]\e[0m Failed to download the script file."
+        rm -f "$TEMP_FILE" "$TEMP_HASH_FILE"
+        exit 1
       fi
-      
+
+      echo "Downloading checksum..."
       if ! gh release download "$LATEST_VERSION" --repo "$UPSTREAM_REPO" --pattern 'gdx.sh.sha256' --clobber --output "$TEMP_HASH_FILE"; then
-        echo -e "\e[1;31m[ERROR]\e[0m Failed to download the checksum file." && rm -f "$TEMP_FILE" "$TEMP_HASH_FILE" && exit 1
+        echo -e "\e[1;31m[ERROR]\e[0m Failed to download the checksum file. Cannot verify integrity."
+        rm -f "$TEMP_FILE" "$TEMP_HASH_FILE"
+        exit 1
       fi
 
       echo "Verifying file integrity..."
@@ -85,7 +90,7 @@ syncWorkflow() {
   WORKFLOW_FILE=".github/workflows/export.yml"
 
   TEMP_REMOTE_HASH_FILE=$(mktemp)
-  if ! gh release download "$VERSION" --repo "$UPSTREAM_REPO" --pattern 'export.yml.sha256' --clobber --output "$TEMP_REMOTE_HASH_FILE"; then
+  if ! gh release download "$VERSION" --repo "$UPSTREAM_REPO" --pattern 'export.yml.sha256' --clobber --output "$TEMP_REMOTE_HASH_FILE" >/dev/null 2>&1; then
     echo -e "\e[1;33m[WARNING]\e[0m Could not find 'export.yml.sha256' for version $VERSION. Cannot guarantee workflow integrity."
     if [[ ! -f "$WORKFLOW_FILE" ]]; then
       echo -e "\e[1;31m[ERROR]\e[0m And no local workflow file exists. Aborting."
@@ -123,64 +128,6 @@ syncWorkflow() {
   mkdir -p .github/workflows
   mv "$TEMP_WORKFLOW_FILE" "$WORKFLOW_FILE"
 }
-
-set -euo pipefail
-
-# Cleanup function to remove secrets
-endProgram() {
-  exitcode=$?
-  trap - INT TERM EXIT
-  printf "\nCleaning up...\n"
-  if [[ -n "${user:-}" ]]; then
-    echo "Removing repository secrets..."
-    gh secret delete KEYSTORE_USER &>/dev/null
-    gh secret delete KEYSTORE_PASS &>/dev/null
-  fi
-  unset GITHUB_TOKEN
-  unset keypass
-
-  echo -e "\e[38;2;61;220;132mThank you for using this tool!"
-
-  # Footer and Credits
-  echo -e "\n\e[38;2;255;165;0m=========================================\e[0m"
-  echo -e "\e[38;2;255;255;0m Author:\e[0m"
-  echo -e "  GitHub: https://github.com/FarizzDev"
-  echo -e "  YouTube: https://youtube.com/ziraFCode"
-  echo -e "\e[38;2;255;165;0m=========================================\e[0m"
-
-  exit $exitcode
-}
-
-# Trap interrupts and exits
-trap endProgram INT TERM EXIT
-
-checkForUpdates
-syncWorkflow
-
-# Platform colors
-ANDROID="\e[38;2;61;220;132m"
-IOS="\e[38;2;163;170;174m"
-HTML5="\e[38;2;228;77;38m"
-MAC_OSX="\e[38;2;176;179;184m"
-UWP="\e[38;2;0;188;242m"
-WINDOWS="\e[38;2;0;120;215m"
-LINUX="\e[38;2;233;84;32m"
-ALL=$'\e[38;2;255;255;255m[ Export All Preset ]\u2063'
-
-# Header
-echo -e "\e[38;2;72;118;255m"
-cat <<"EOF"
-           ____  ___  ____  _   ___  __
-          / ___|/ _ \|  _ \| | | \ \/ /
-         | |  _| | | | | | | | | |\  /
-         | |_| | |_| | |_| | |_| |/  \
-          \____|\___/|____/ \___//_/\_\
-EOF
-echo -e "\e[0m"
-echo -e "             \e[38;2;255;255;255mGodot Universal eXport\e[0m"
-echo ""
-echo -e "\e[38;2;255;255;0m Export Godot Projects From Anywhere, To Anywhere.\e[0m"
-echo -e "\e[38;2;72;118;255m====================================================\e[0m"
 
 # Dependency installation
 install_dependencies() {
@@ -249,6 +196,64 @@ install_dependencies() {
 
 printf "\n"
 install_dependencies
+
+set -euo pipefail
+
+# Cleanup function to remove secrets
+endProgram() {
+  exitcode=$?
+  trap - INT TERM EXIT
+  printf "\nCleaning up...\n"
+  if [[ -n "${user:-}" ]]; then
+    echo "Removing repository secrets..."
+    gh secret delete KEYSTORE_USER &>/dev/null
+    gh secret delete KEYSTORE_PASS &>/dev/null
+  fi
+  unset GITHUB_TOKEN
+  unset keypass
+
+  echo -e "\e[38;2;61;220;132mThank you for using this tool!"
+
+  # Footer and Credits
+  echo -e "\n\e[38;2;255;165;0m=========================================\e[0m"
+  echo -e "\e[38;2;255;255;0m Author:\e[0m"
+  echo -e "  GitHub: https://github.com/FarizzDev"
+  echo -e "  YouTube: https://youtube.com/ziraFCode"
+  echo -e "\e[38;2;255;165;0m=========================================\e[0m"
+
+  exit $exitcode
+}
+
+# Trap interrupts and exits
+trap endProgram INT TERM EXIT
+
+checkForUpdates
+syncWorkflow
+
+# Platform colors
+ANDROID="\e[38;2;61;220;132m"
+IOS="\e[38;2;163;170;174m"
+HTML5="\e[38;2;228;77;38m"
+MAC_OSX="\e[38;2;176;179;184m"
+UWP="\e[38;2;0;188;242m"
+WINDOWS="\e[38;2;0;120;215m"
+LINUX="\e[38;2;233;84;32m"
+ALL=$'\e[38;2;255;255;255m[ Export All Preset ]\u2063'
+
+# Header
+echo -e "\e[38;2;72;118;255m"
+cat <<"EOF"
+           ____  ___  ____  _   ___  __
+          / ___|/ _ \|  _ \| | | \ \/ /
+         | |  _| | | | | | | | | |\  /
+         | |_| | |_| | |_| | |_| |/  \
+          \____|\___/|____/ \___//_/\_\
+EOF
+echo -e "\e[0m"
+echo -e "             \e[38;2;255;255;255mGodot Universal eXport\e[0m"
+echo ""
+echo -e "\e[38;2;255;255;0m Export Godot Projects From Anywhere, To Anywhere.\e[0m"
+echo -e "\e[38;2;72;118;255m====================================================\e[0m"
 
 if [[ ! -e "export_presets.cfg" ]]; then
   printf "\n\e[1;31m[ERROR]\e[0m Can't find export_presets.cfg. Exiting.\n"
