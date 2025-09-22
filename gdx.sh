@@ -3,7 +3,7 @@
 # Copyright (c) 2025 FarizzDev
 
 # Auto-Update
-VERSION="v0.5.0"
+VERSION="v0.5.1"
 UPSTREAM_REPO="FarizzDev/Godux"
 CHECK_INTERVAL=86400 # 24 hours in seconds
 LAST_CHECK_FILE=~/.godux_last_check
