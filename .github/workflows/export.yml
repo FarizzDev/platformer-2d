@@ -133,6 +133,11 @@ jobs:
           chmod +x android/build/gradlew
           echo "✅ Android Build folder is ready with version: ${{ env.VERSION }}"
 
+          echo "=== CHECKING ANDROID BUILD STRUCTURE ==="
+          ls -la android/build/
+          echo "=== CHECKING .build_version CONTENT ==="
+          cat android/build/.build_version || echo "File .build_version TIDAK DITEMUKAN"
+
       - name: ☕ Setup JDK 17 (For SDK Tools)
         uses: actions/setup-java@v4
         with:
