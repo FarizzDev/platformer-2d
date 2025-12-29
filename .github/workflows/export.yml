@@ -118,24 +118,30 @@ jobs:
           cp -r temp_templates/templates/. ~/.local/share/godot/templates/${{ env.VERSION }}/
           rm -rf temp_templates godot-templates.tpz
 
-      - name: 🏗️ Prepare Android Build Folder
+      - name: 🏗️ Synchronize Version Info
         if: env.ISANDROID == 'true'
         run: |
-          rm -rf android/
-          mkdir -p android/build
+          # 1. Tentukan variabel versi agar konsisten
+          V_NAME="${{ env.VERSION }}"
+          T_PATH="$HOME/.local/share/godot/templates/$V_NAME"
+          B_PATH="android/build"
 
-          TEMPLATE_PATH="$HOME/.local/share/godot/templates/${{ env.VERSION }}"
-          unzip -o "$TEMPLATE_PATH/android_source.zip" -d android/build/
+          # 2. PASTIKAN di Folder Template Global ada .build_version
+          # Ini yang sering terlewat!
+          mkdir -p "$T_PATH"
+          echo -n "$V_NAME" > "$T_PATH/.build_version"
 
-          echo -n "${{ env.VERSION }}" > android/build/.build_version
+          # 3. PASTIKAN di Folder Proyek juga ada .build_version
+          mkdir -p "$B_PATH"
+          echo -n "$V_NAME" > "$B_PATH/.build_version"
 
-          ln -s android Android || true
+          # 4. Verifikasi Keberadaan (Debug)
+          echo "Template version file:"
+          ls -la "$T_PATH/.build_version"
+          echo "Project version file:"
+          ls -la "$B_PATH/.build_version"
 
-          chmod +x android/build/gradlew
-
-          echo "=== VERIFIKASI AKHIR ==="
-          ls -la android/build/.build_version
-          echo "Content: '$(cat android/build/.build_version)'"
+          echo "Semua .build_version sudah disinkronkan!"
 
       - name: ☕ Setup JDK 17 (For SDK Tools)
         uses: actions/setup-java@v4
