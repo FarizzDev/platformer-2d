@@ -114,9 +114,24 @@ jobs:
         run: |
           curl -L $TEMPLATES_LINK -o godot-templates.tpz
           mkdir -p ~/.local/share/godot/templates/${{ env.VERSION }}
-          unzip godot-templates.tpz -d ~/godot-templates
-          mv ~/godot-templates/templates/* ~/.local/share/godot/templates/${{ env.VERSION }}/
-          rm -rf ~/godot-templates
+          unzip godot-templates.tpz -d temp_templates
+          cp -r temp_templates/templates/. ~/.local/share/godot/templates/${{ env.VERSION }}/
+          rm -rf temp_templates godot-templates.tpz
+
+      - name: 🏗️ Prepare Android Build Folder
+        if: env.ISANDROID == 'true'
+        run: |
+          TEMPLATE_PATH="$HOME/.local/share/godot/templates/${{ env.VERSION }}"
+
+          rm -rf android/build
+          mkdir -p android/build
+
+          unzip -o "$TEMPLATE_PATH/android_source.zip" -d android/build/
+
+          echo "${{ env.VERSION }}" > android/build/.build_version
+
+          chmod +x android/build/gradlew
+          echo "✅ Android Build folder is ready with version: ${{ env.VERSION }}"
 
       - name: ☕ Setup JDK 17 (For SDK Tools)
         uses: actions/setup-java@v4
