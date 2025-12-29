@@ -170,27 +170,26 @@ jobs:
             local search_name="$1"
             
             local format=$(awk -v ref="$search_name" '
-              BEGIN { FS = "[[:space:]]*=[[:space:]]*"; in_preset=0; res="0" }
+              BEGIN { FS="="; in_p=0; res="0" }
               
-              /^\[preset\./ { in_preset=0 }
+              /^\[preset\./ { in_p=0 }
               
-              /^name/ { 
+              /name="/ { 
                 n=$2; gsub(/"/, "", n); 
-                if (n == ref) in_preset=1 
+                gsub(/^[[:space:]]+|[[:space:]]+$/, "", n);
+                if (n == ref) in_p=1 
               }
               
-              in_preset && /.*export_format/ { 
-                res=$2; exit 
+              in_p && /export_format/ { 
+                v=$2; gsub(/[[:space:]\r]/, "", v); 
+                res=v; 
+                exit 
               }
               
               END { print res }
             ' export_presets.cfg)
 
-            if [[ "$format" == "1" ]]; then
-              echo "aab"
-            else
-              echo "apk"
-            fi
+            if [[ "$format" == "1" ]]; then echo "aab"; else echo "apk"; fi
           }
 
           if [ "$PRESET_NAME" = $'[ Export All Preset ]\u2063' ]; then
