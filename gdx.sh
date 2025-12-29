@@ -3,7 +3,7 @@
 # Copyright (c) 2025 FarizzDev
 
 # Auto-Update
-VERSION="v0.5.1"
+VERSION="v0.7.0"
 UPSTREAM_REPO="FarizzDev/Godux"
 CHECK_INTERVAL=86400 # 24 hours in seconds
 LAST_CHECK_FILE=~/.godux_last_check
@@ -25,7 +25,7 @@ checkForUpdates() {
   echo "Checking for updates..."
   date +%s >"$LAST_CHECK_FILE"
 
-  if ! LATEST_VERSION=$(gh release list --repo "$UPSTREAM_REPO" --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null); then
+  if ! LATEST_VERSION=$(gh api repos/$UPSTREAM_REPO/releases/latest --jq .tag_name 2>/dev/null); then
     echo -e "\e[1;33m[WARNING]\e[0m Could not fetch releases. Are you offline?"
     return
   fi
@@ -402,8 +402,7 @@ read -p "Enter Templates link (default Godot v3.6-stable): " templates_link
 validate_url "$templates_link" "Templates link"
 
 # Debug and Cache input
-echo -e "\n\\e[90m(Note: For new Android keys, this is also used as the certificate's CN. If using an existing key, it's only for filenames.)\\e[0m"
-read -p "Enter a base name for output files (e.g., MyGame): " dname
+read -p "Enter a base name for output files (e.g., MyGame): " file_basename
 read -p "Enable debug? (y/N): " debug
 debug=${debug,,} # Convert to lowercase
 debug=${debug:-"n"}
@@ -440,6 +439,7 @@ if [[ "$platform" == "Android" || "$preset_name" == $'[ Export All Preset ]\u206
     else
       echo "No existing keystore. We will generate a new one."
       gh secret remove RELEASE_KEYSTORE_BASE64 &>/dev/null || true
+      read -p "Enter Certificate CN (e.g., Your Name, Your Company): " cert_cn
       read -p "Enter Organization for Android (O, optional): " org
       read -p "Enter 2-letter Country Code for Android (C, optional): " country
     fi
@@ -453,6 +453,7 @@ if [[ "$platform" == "Android" || "$preset_name" == $'[ Export All Preset ]\u206
   else
     user="androiddebugkey"
     keypass="android"
+    cert_cn="Android Debug"
   fi
 
   printf "\n"
@@ -467,7 +468,7 @@ echo -e "\e[38;2;61;220;132m# Running workflow...\e[0m"
 args=("export.yml")
 
 # Add fields if inputs are present
-for FIELD in godot_link templates_link preset_name debug cache dname org country; do
+for FIELD in godot_link templates_link preset_name debug cache file_basename cert_cn org country; do
   VALUE="${!FIELD-}"
   if [ -n "$VALUE" ]; then
     args+=("-f")
