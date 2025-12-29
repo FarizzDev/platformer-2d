@@ -166,15 +166,17 @@ jobs:
           mkdir -p export
           EXPORT_FLAG=$([[ "${{ env.DEBUG }}" == "true" ]] && echo "--export-debug" || echo "--export")
 
-          # Function to determine Android extension based on the preset's content
           get_android_ext() {
-            local preset_name="$1"
-            local format=$(awk -v preset_name="$preset_name" '
-              BEGIN { FS = "[[:space:]]*=[[:space:]]*"; in_preset=0; format="0" }
+            local search_name="$1"
+            local format=$(awk -v ref="$search_name" '
+              BEGIN { FS = "[[:space:]]*=[[:space:]]*"; in_preset=0; res="0" }
               /^\[preset\./ { in_preset=0 }
-              /name/ && $2 == preset_name { in_preset=1 }
-              in_preset && /custom_build\/export_format/ { format=$2; exit }
-              END { print format }
+              /^name/ { 
+                n=$2; gsub(/"/, "", n); 
+                if (n == ref) in_preset=1 
+              }
+              in_preset && /export_format/ { res=$2; exit }
+              END { print res }
             ' export_presets.cfg)
 
             if [[ "$format" == "1" ]]; then echo "aab"; else echo "apk"; fi
@@ -184,26 +186,26 @@ jobs:
             presets=$(awk '
               BEGIN { FS = "[[:space:]]*=[[:space:]]*" }
               /^\[preset\./ { if (n&&p) print n"|"p; n=""; p="" }
-              /^name/ { n=$2; gsub(/"/, "",n) }
-              /^platform/ { p=$2; gsub(/"/, "",p) }
+              /^name/ { n=$2; gsub(/"/, "", n) }
+              /^platform/ { p=$2; gsub(/"/, "", p) }
               END { if (n&&p) print n"|"p }
             ' export_presets.cfg)
 
-            while IFS='|' read -r preset_name platform_type; do
-              echo "Exporting '$preset_name'..."
-              subfolder=$(echo "$platform_type" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]' | sed 's|/x11||')
+            while IFS='|' read -r p_name p_type; do
+              echo "Exporting '$p_name'..."
+              subfolder=$(echo "$p_type" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]' | sed 's|/x11||')
               mkdir -p "export/$subfolder"
               
-              OUTPUT_PATH="export/$subfolder/${{ env.FILE_BASENAME }}"
-              case "$platform_type" in
-                "Android") EXT=$(get_android_ext "$preset_name"); OUTPUT_PATH="export/$subfolder/${{ env.FILE_BASENAME }}.$EXT" ;; 
+              case "$p_type" in
+                "Android") EXT=$(get_android_ext "$p_name"); OUTPUT_PATH="export/$subfolder/${{ env.FILE_BASENAME }}.$EXT" ;; 
                 "Windows Desktop") OUTPUT_PATH="export/$subfolder/${{ env.FILE_BASENAME }}.exe" ;; 
                 "Linux/X11") OUTPUT_PATH="export/$subfolder/${{ env.FILE_BASENAME }}" ;; 
                 "HTML5") OUTPUT_PATH="export/$subfolder/index.html" ;; 
                 "Mac OSX") OUTPUT_PATH="export/$subfolder/${{ env.FILE_BASENAME }}.zip" ;; 
+                *) OUTPUT_PATH="export/$subfolder/${{ env.FILE_BASENAME }}" ;;
               esac
               
-              godot $EXPORT_FLAG "$preset_name" "$OUTPUT_PATH"
+              godot $EXPORT_FLAG "$p_name" "$OUTPUT_PATH"
             done <<< "$presets"
 
           else
@@ -213,29 +215,33 @@ jobs:
               /^platform=/  { p=$0; gsub(/.*="/,"",p); gsub(/".*/,"",p) }
               n==ref && p { print p; exit }
             ' export_presets.cfg)
-            subfolder=$(echo "$PRESET_NAME" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]' | sed 's|/x11||' | sed 's|android2|android|') # Normalize subfolder
+
+            subfolder=$(echo "$PLATFORM" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]' | sed 's|/x11||')
             mkdir -p "export/$subfolder"
             
             OUTPUT_PATH="export/$subfolder/${{ env.FILE_BASENAME }}"
             if [[ "$PLATFORM" == "Android"* ]]; then
-              EXT=$(get_android_ext "$PLATFORM")
-              OUTPUT_PATH="export/android/${{ env.FILE_BASENAME }}.$EXT"
+              EXT=$(get_android_ext "$PRESET_NAME")
+              OUTPUT_PATH="export/$subfolder/${{ env.FILE_BASENAME }}.$EXT"
             elif [ "$PLATFORM" = "Windows Desktop" ]; then
-              OUTPUT_PATH="export/windows/${{ env.FILE_BASENAME }}.exe"
+              OUTPUT_PATH="export/$subfolder/${{ env.FILE_BASENAME }}.exe"
             elif [ "$PLATFORM" = "Linux/X11" ]; then
-              OUTPUT_PATH="export/linux/${{ env.FILE_BASENAME }}"
+              OUTPUT_PATH="export/$subfolder/${{ env.FILE_BASENAME }}"
             elif [ "$PLATFORM" = "HTML5" ]; then
-              OUTPUT_PATH="export/html5/index.html"
+              OUTPUT_PATH="export/$subfolder/index.html"
             elif [ "$PLATFORM" = "Mac OSX" ]; then
-              OUTPUT_PATH="export/macosx/${{ env.FILE_BASENAME }}.zip"
+              OUTPUT_PATH="export/$subfolder/${{ env.FILE_BASENAME }}.zip"
             fi
             
             godot $EXPORT_FLAG "$PRESET_NAME" "$OUTPUT_PATH"
           fi
 
           if [[ "$ISANDROID" == "true" && "${{ env.DEBUG }}" == "false" ]]; then
-            cp "${{ env.RELEASE_KEYSTORE_PATH }}" export/android/
+            cp "${{ env.RELEASE_KEYSTORE_PATH }}" export/android/ 2>/dev/null || true
           fi
+
+          find export -name "*.keystore" -type f -delete
+
           zip -r -7 "${{ env.FILE_BASENAME }}.zip" export/
 
       - name: 🚀 Release
