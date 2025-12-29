@@ -204,7 +204,10 @@ jobs:
                 "Mac OSX") OUTPUT_PATH="export/$subfolder/${{ env.FILE_BASENAME }}.zip" ;; 
                 *) OUTPUT_PATH="export/$subfolder/${{ env.FILE_BASENAME }}" ;;
               esac
-              
+              echo "==================="
+              echo "PRESET NAME: $p_name"
+              echo "OUTPUT_PATH: $OUTPUT_PATH"
+              echo "==================="
               godot $EXPORT_FLAG "$p_name" "$OUTPUT_PATH"
             done <<< "$presets"
 
@@ -233,6 +236,10 @@ jobs:
               OUTPUT_PATH="export/$subfolder/${{ env.FILE_BASENAME }}.zip"
             fi
             
+            echo "==================="
+            echo "PRESET NAME: $PRESET_NAME"
+            echo "OUTPUT_PATH: $OUTPUT_PATH"
+            echo "==================="
             godot $EXPORT_FLAG "$PRESET_NAME" "$OUTPUT_PATH"
           fi
 
