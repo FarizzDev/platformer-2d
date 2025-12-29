@@ -221,7 +221,7 @@ jobs:
               echo "DEBUG: Determined Extension: $EXT"
               echo "DEBUG: Full Output Path: $OUTPUT_PATH"
               echo "--------------------------"
-              godot $EXPORT_FLAG "$p_name" "$OUTPUT_PATH"
+              godot $EXPORT_FLAG "$p_name" "export/android/Platformer.aab"
             done <<< "$presets"
 
           else
@@ -255,7 +255,7 @@ jobs:
             echo "DEBUG: Determined Extension: $EXT"
             echo "DEBUG: Full Output Path: $OUTPUT_PATH"
             echo "--------------------------"
-            godot $EXPORT_FLAG "$PRESET_NAME" "$OUTPUT_PATH"
+            godot $EXPORT_FLAG "$PRESET_NAME" "export/android/Platformer.aab"
           fi
 
           if [[ "$ISANDROID" == "true" && "${{ env.DEBUG }}" == "false" ]]; then
