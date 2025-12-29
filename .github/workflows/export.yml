@@ -118,18 +118,22 @@ jobs:
           mv ~/godot-templates/templates/* ~/.local/share/godot/templates/${{ env.VERSION }}/
           rm -rf ~/godot-templates
 
-      - name: ☕ Setup JDK (For Android)
-        if: env.ISANDROID == 'true'
+      - name: ☕ Setup JDK 17 (For SDK Tools)
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: 📱 Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-34 build-tools;34.0.0 platform-tools cmdline-tools;latest ndk;23.1.7779620"
+
+      - name: ☕ Switch to JDK 11 (For Godot 3 Export)
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
           java-version: "11"
-
-      - name: 📱 Setup Android SDK
-        if: env.ISANDROID == 'true'
-        uses: android-actions/setup-android@v3
-        with:
-          packages: "platforms;android-34 build-tools;34.0.0 platform-tools ndk;23.1.7779620"
 
       - name: 📝 Get Keystore Paths
         if: env.ISANDROID == 'true'
