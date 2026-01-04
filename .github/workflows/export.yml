@@ -128,4 +128,4 @@ jobs:
       - name: 🚀 Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "build-${{ github.run_id }}" "${{ env.FILE_BASENAME }}.zip" --notes "Automated build from GitHub Actions"
+        run: gh release create "build-${{ github.run_id }}" "${{ env.FILE_BASENAME }}-build.zip" --notes "Automated build from GitHub Actions"
