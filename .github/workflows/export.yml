@@ -104,7 +104,7 @@ jobs:
 
       - name: 🔑 Setup Keystore (For Android)
         if: env.ISANDROID == 'true'
-        run: bash .github/scripts/gen_keystore.sh
+        run: bash .github/scripts/gen-keystore.sh
         env:
           DEBUG: ${{ env.DEBUG }}
           PRESET_NAME: ${{ env.PRESET_NAME }}
