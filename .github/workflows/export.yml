@@ -63,7 +63,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: ⚙️ Prepare
-        run: bash scripts/prepare-build.sh
+        run: bash .github/scripts/prepare-build.sh
         env:
           GODOT_LINK: ${{ env.GODOT_LINK }}
 
@@ -104,7 +104,7 @@ jobs:
 
       - name: 🔑 Setup Keystore (For Android)
         if: env.ISANDROID == 'true'
-        run: bash scripts/gen_keystore.sh
+        run: bash .github/scripts/gen_keystore.sh
         env:
           DEBUG: ${{ env.DEBUG }}
           PRESET_NAME: ${{ env.PRESET_NAME }}
@@ -117,7 +117,7 @@ jobs:
           FILE_BASENAME: ${{ env.FILE_BASENAME }}
 
       - name: 🛠 Export
-        run: bash scripts/export.sh
+        run: bash .github/scripts/export.sh
         env:
           DEBUG: ${{ env.DEBUG }}
           PRESET_NAME: ${{ env.PRESET_NAME }}
