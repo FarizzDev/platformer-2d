@@ -565,9 +565,6 @@ else
   echo "Workflow failed with status: $CONCLUSION"
   printf "\n"
 
-  RAW_LOG=$(gh run view $WORKFLOW_ID --log-failed)
+  gh run view "$WORKFLOW_ID" --log-failed | grep -Ev 'at:|VisualServer' | sed '1,/##\[endgroup\]/d' | sed 's/[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}T[0-9:.]\+Z //'
 
-  ERROR_MESSAGE=$(echo "$RAW_LOG" | grep -Ev 'at:|VisualServer' | sed '1,/##\[endgroup\]/d' | sed 's/[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}T[0-9:.]\+Z //')
-
-  echo "$ERROR_MESSAGE"
 fi
