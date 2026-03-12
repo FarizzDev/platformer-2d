@@ -1,0 +1,51 @@
+build	🔑 Setup Keystore (For Android)	﻿2026-03-12T02:14:21.4264715Z ##[group]Run bash .github/scripts/gen-keystore.sh
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:21.4265119Z [36;1mbash .github/scripts/gen-keystore.sh[0m
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:21.4314012Z shell: /usr/bin/bash -e {0}
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:21.4314260Z env:
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:21.4314746Z   GODOT_LINK: https://github.com/godotengine/godot/releases/download/3.6-stable/Godot_v3.6-stable_linux_headless.64.zip
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:21.4315591Z   TEMPLATES_LINK: https://github.com/godotengine/godot/releases/download/3.6-stable/Godot_v3.6-stable_export_templates.tpz
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:21.4316142Z   PRESET_NAME: Android
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:21.4316586Z   KEYSTORE_PASS: ***
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:21.4316827Z   KEYSTORE_USER: ***
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:21.4317029Z   DEBUG: false
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:21.4317219Z   CACHE: true
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:21.4317413Z   FILE_BASENAME: p
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:21.4317614Z   CERT_CN: gdxf
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:21.4317800Z   ORG: gdx
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:21.4317970Z   COUNTRY: ID
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:21.4318147Z   ISANDROID: true
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:21.4318339Z   VERSION: 3.6.stable
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:21.4318700Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.18-8/x64
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:21.4319181Z   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.18-8/x64
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:21.4319600Z   ANDROID_HOME: /usr/local/lib/android/sdk
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:21.4319896Z   ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:21.4320181Z   RELEASE_KEYSTORE_BASE64: 
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:21.4320407Z ##[endgroup]
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:21.4917408Z >>> Generating release keystore...
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.0696298Z Generating 2,048 bit RSA key pair and self-signed certificate (SHA256withRSA) with a validity of 10,000 days
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.0697429Z 	for: CN=gdxf, O=gdx, C=ID
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1102543Z keytool error: java.security.KeyStoreException: Key protection algorithm not found: java.security.UnrecoverableKeyException: Encrypt Private Key failed: getSecretKey failed: Password is not ASCII
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1118529Z java.security.KeyStoreException: Key protection algorithm not found: java.security.UnrecoverableKeyException: Encrypt Private Key failed: getSecretKey failed: Password is not ASCII
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1120636Z 	at java.base/sun.security.pkcs12.PKCS12KeyStore.setKeyEntry(PKCS12KeyStore.java:709)
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1122227Z 	at java.base/sun.security.pkcs12.PKCS12KeyStore.engineSetKeyEntry(PKCS12KeyStore.java:589)
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1123890Z 	at java.base/sun.security.util.KeyStoreDelegator.engineSetKeyEntry(KeyStoreDelegator.java:112)
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1125134Z 	at java.base/java.security.KeyStore.setKeyEntry(KeyStore.java:1167)
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1126364Z 	at java.base/sun.security.tools.keytool.Main.doGenKeyPair(Main.java:2055)
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1127457Z 	at java.base/sun.security.tools.keytool.Main.doCommands(Main.java:1186)
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1128443Z 	at java.base/sun.security.tools.keytool.Main.run(Main.java:423)
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1129381Z 	at java.base/sun.security.tools.keytool.Main.main(Main.java:416)
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1130874Z Caused by: java.security.UnrecoverableKeyException: Encrypt Private Key failed: getSecretKey failed: Password is not ASCII
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1132587Z 	at java.base/sun.security.pkcs12.PKCS12KeyStore.encryptPrivateKey(PKCS12KeyStore.java:957)
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1133833Z 	at java.base/sun.security.pkcs12.PKCS12KeyStore.setKeyEntry(PKCS12KeyStore.java:631)
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1134559Z 	... 7 more
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1135224Z Caused by: java.io.IOException: getSecretKey failed: Password is not ASCII
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1136296Z 	at java.base/sun.security.pkcs12.PKCS12KeyStore.getPBEKey(PKCS12KeyStore.java:872)
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1137606Z 	at java.base/sun.security.pkcs12.PKCS12KeyStore.encryptPrivateKey(PKCS12KeyStore.java:935)
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1138429Z 	... 8 more
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1139154Z Caused by: java.security.spec.InvalidKeySpecException: Password is not ASCII
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1140201Z 	at java.base/com.sun.crypto.provider.PBEKey.<init>(PBEKey.java:72)
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1141441Z 	at java.base/com.sun.crypto.provider.PBEKeyFactory.engineGenerateSecret(PBEKeyFactory.java:219)
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1143495Z 	at java.base/javax.crypto.SecretKeyFactory.generateSecret(SecretKeyFactory.java:340)
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1144752Z 	at java.base/sun.security.pkcs12.PKCS12KeyStore.getPBEKey(PKCS12KeyStore.java:870)
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1145492Z 	... 9 more
+build	🔑 Setup Keystore (For Android)	2026-03-12T02:14:22.1297903Z ##[error]Process completed with exit code 1.
