@@ -1,31 +1,9 @@
 #!/bin/bash
 set -e
 
-DEBUG_KEYSTORE_PATH=$(awk -F'=' -v target="\"$PRESET_NAME\"" '
-    { sub(/\r$/, "") }
-    /^\[preset\.[0-9]+\]$/ { in_target = 0 }
-    
-    $1 == "name" && $2 == target { in_target = 1 }
-    in_target && $1 == "keystore/debug" {
-        gsub(/"/, "", $2); gsub(/res:\/\//, "", $2);
-        val = $2; exit
-    }
+DEBUG_KEYSTORE_PATH=$(python3 .github/scripts/lib/parse_presets.py keystore "$PRESET_NAME" debug)
 
-    END { print (val ? val : "debug.keystore") }
-' export_presets.cfg)
-
-RELEASE_KEYSTORE_PATH=$(awk -F'[[:space:]]*=[[:space:]]*' -v target="\"$PRESET_NAME\"" '
-    { sub(/\r$/, "") }
-    /^\[preset\.[0-9]+\]$/ { in_target = 0 }
-
-    $1 == "name" && $2 == target { in_target = 1 }
-    in_target && $1 == "keystore/release" {
-        gsub(/"/, "", $2); gsub(/res:\/\//, "", $2);
-        val =  $2; exit
-    }
-    
-    END { print (val ? val : "release.keystore") }
-' export_presets.cfg)
+RELEASE_KEYSTORE_PATH=$(python3 .github/scripts/lib/parse_presets.py keystore "$PRESET_NAME" release)
 
 echo "DEBUG_KEYSTORE_PATH=$DEBUG_KEYSTORE_PATH" >>"$GITHUB_ENV"
 echo "RELEASE_KEYSTORE_PATH=$RELEASE_KEYSTORE_PATH" >>"$GITHUB_ENV"

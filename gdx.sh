@@ -86,7 +86,7 @@ checkForUpdates() {
   fi
 }
 syncWorkflow() {
-  echo "Syncing workflow file to script version ($VERSION)..."
+  echo "Syncing workflow files to script version ($VERSION)..."
   WORKFLOW_FILE=".github/workflows/export.yml"
 
   TEMP_REMOTE_HASH_FILE=$(mktemp)
@@ -330,13 +330,7 @@ fi
 
 ## Run export.yml workflow
 # Get all preset names and their platforms
-presets_with_platforms=$(awk '
-  BEGIN { FS = "[[:space:]]*=[[:space:]]*" }
-  /^\[preset\./ { if (n&&p) print n"|"p; n=""; p="" }
-  /^name/ { n=$2; gsub(/"/,"",n) }
-  /^platform/ { p=$2; gsub(/"/,"",p) }
-  END { if (n&&p) print n"|"p }
-' export_presets.cfg)
+presets_with_platforms=$(python3 .github/scripts/lib/parse_presets.py list)
 
 options=()
 options+=("$ALL")
@@ -367,12 +361,7 @@ done <<<"$presets_with_platforms"
 
 presetname_raw=$(printf "%b\n" "${options[@]}" | fzf --ansi --no-sort --prompt="Select a platform: ")
 preset_name=$(echo "$presetname_raw" | sed -r 's/\x1B\[[0-9;:]*[mK]//g')
-platform=$(awk -v ref="$preset_name" '
-  /^\[preset\./ { n=""; p="" }
-  /^name=/      { n=$0; gsub(/.*="/,"",n); gsub(/".*/,"",n) }
-  /^platform=/  { p=$0; gsub(/.*="/,"",p); gsub(/".*/,"",p) }
-  n==ref && p { print p; exit }
-' export_presets.cfg)
+platform=$(python3 .github/scripts/lib/parse_presets.py platform "$preset_name")
 
 if [ -z "$preset_name" ]; then
   echo -e "\e[1;31m[ERROR]\e[0m No platform selected. Exiting."
@@ -409,12 +398,7 @@ cache=$([[ "$cache" =~ ^y(e?s)?$ ]] && echo true || echo false)
 
 # Android requirements
 if [[ "$platform" == "Android" || "$preset_name" == $'[ Export All Preset ]\u2063' ]]; then
-  ISANDROID=$(awk -F= '
-    BEGIN { IGNORECASE=1 }
-    /^\[preset\.[0-9]+\]$/ { in_preset=1; next }
-    /^\[/ && $0 !~ /^\[preset\.[0-9]+\]$/ { in_preset=0 }
-    in_preset && /platform/ && $2 ~ /Android/ { print "true"; exit }
-  ' export_presets.cfg)
+  python3 .github/scripts/lib/parse_presets.py is_android "$preset_name" && ISANDROID=true || ISANDROID=false
 
   if [[ "$ISANDROID" == "true" && ! "$debug" == "true" ]]; then
     read -p "Do you have an existing release.keystore file? (y/N): " has_keystore
