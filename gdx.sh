@@ -564,10 +564,14 @@ if [[ "$CONCLUSION" == "success" ]]; then
 else
   echo "Workflow failed with status: $CONCLUSION"
   printf "\n"
-  if gh run view $WORKFLOW_ID --log-failed | grep -q "export"; then
-    ERROR_MESSAGE=$(gh run view $WORKFLOW_ID --log-failed | grep -Ev 'at:|VisualServer' | sed '1,/##\[endgroup\]/d')
+
+  RAW_LOG=$(gh run view $WORKFLOW_ID --log-failed)
+
+  if echo "$RAW_LOG" | grep -q "export"; then
+    ERROR_MESSAGE=$(echo "$RAW_LOG" | grep -Ev 'at:|VisualServer' | sed '1,/##\[endgroup\]/d' | sed 's/[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}T[0-9:.]\+Z //')
   else
-    ERROR_MESSAGE=$(gh run view $WORKFLOW_ID --log-failed | sed '1,/##\[endgroup\]/d')
+    ERROR_MESSAGE=$(echo "$RAW_LOG" | grep -Ev 'at:|VisualServer' | sed '1,/##\[endgroup\]/d' | sed 's/[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}T[0-9:.]\+Z //')
   fi
-  echo $ERROR_MESSAGE
+
+  echo "$ERROR_MESSAGE"
 fi
