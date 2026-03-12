@@ -564,7 +564,7 @@ if [[ "$CONCLUSION" == "success" ]]; then
 else
   echo "Workflow failed with status: $CONCLUSION"
   printf "\n"
-  gh run view $WORKFLOW_ID --log-failed | cat -A | head -10
+
   gh run view $WORKFLOW_ID --log-failed |
     tr -d '\r' |
     grep -Ev 'at:|VisualServer' |
