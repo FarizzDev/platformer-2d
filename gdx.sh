@@ -566,6 +566,7 @@ else
   printf "\n"
 
   gh run view $WORKFLOW_ID --log-failed |
+    tr -d '\r' |
     grep -Ev 'at:|VisualServer' |
     sed '1,/##\[endgroup\]/d' |
     sed 's/[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}T[0-9:.]\+Z //'
