@@ -75,7 +75,6 @@ def parse_presets(filepath):
                 # Options fields
                 current_preset["options"][key] = value
 
-    # Don't forget the last preset
     if current_preset is not None:
         presets.append(current_preset)
 
@@ -172,7 +171,6 @@ def cmd_keystore(presets, name, keystore_type):
         print(f"Error: Preset '{name}' not found.", file=sys.stderr)
         sys.exit(1)
 
-    # Keystore hanya relevan untuk Android
     if p["platform"] != "Android":
         print("")
         sys.exit(0)
