@@ -54,7 +54,7 @@ if [ "$PRESET_NAME" = $'[ Export All Preset ]\u2063' ]; then
   done <<<"$presets"
 
   if [ ${#SUCCEEDED[@]} -eq 0 ]; then
-    echo "::error::[ERROR] All exports failed!"
+    echo "::error title=All exports failed!::[ERROR] All exports failed!"
     exit 1
   fi
 
