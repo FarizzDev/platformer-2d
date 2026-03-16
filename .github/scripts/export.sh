@@ -59,7 +59,7 @@ if [ "$PRESET_NAME" = $'[ Export All Preset ]\u2063' ]; then
   fi
 
   if [ ${#FAILED[@]} -gt 0 ]; then
-    echo "::warning title=${#FAILED[@]} export(s) failed::Warning: ${#FAILED[@]} export(s) failed - Failed: ${FAILED[*]}"
+    echo "::warning title=${#FAILED[@]} export(s) failed::${#FAILED[@]} export(s) failed - Failed: ${FAILED[*]}"
   fi
 else
   # Export Single Preset
@@ -84,6 +84,8 @@ if [[ "$ISANDROID" == "true" && "$DEBUG" == "false" ]]; then
   cp "$RELEASE_KEYSTORE_PATH" export/android/ 2>/dev/null || true
 fi
 
+echo "::group::>>> Packing results..."
 cd export/
 zip -r -7 "../$FILE_BASENAME-build.zip" ./*
 cd ..
+echo "::endgroup::"
