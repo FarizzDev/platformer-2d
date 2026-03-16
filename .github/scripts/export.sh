@@ -36,16 +36,30 @@ if [ "$PRESET_NAME" = $'[ Export All Preset ]\u2063' ]; then
   # name|platform
   presets=$(perl .github/scripts/lib/parse_presets.pl list)
 
+  SUCCEEDED=()
+  FAILED=()
+
   while IFS='|' read -r p_name p_type; do
     echo ">>> Exporting $p_name ($p_type)..."
     OUT=$(get_output_path "$p_name" "$p_type")
     godot --headless $EXPORT_FLAG "$p_name" "$OUT" 2>&1 | grep -v "VisualServer attempted to free a NULL RID\|at: free (servers/visual"
     GODOT_EXIT=${PIPESTATUS[0]}
     if [ $GODOT_EXIT -ne 0 ]; then
-      echo "Export failed with exit code $GODOT_EXIT"
-      exit $GODOT_EXIT
+      echo "[!] Export failed for $p_name"
+      FAILED+=("$p_name")
+    else
+      SUCCEEDED+=("$p_name")
     fi
   done <<<"$presets"
+
+  if [ ${#SUCCEEDED[@]} -eq 0 ]; then
+    echo "[ERROR] All exports failed!"
+    exit 1
+  fi
+
+  if [ ${#FAILED[@]} -gt 0 ]; then
+    echo "Warning: ${#FAILED[@]} export(s) failed: ${FAILED[*]}"
+  fi
 else
   # Export Single Preset
   echo ">>> Exporting $PRESET_NAME..."
@@ -67,4 +81,6 @@ if [[ "$ISANDROID" == "true" && "$DEBUG" == "false" ]]; then
   cp "$RELEASE_KEYSTORE_PATH" export/android/ 2>/dev/null || true
 fi
 
-zip -r -7 "$FILE_BASENAME-build.zip" export/
+cd export/
+zip -r -7 "../$FILE_BASENAME-build.zip" ./*
+cd ..
