@@ -49,14 +49,9 @@ jobs:
       GODOT_LINK: ${{ inputs.godot_link }}
       TEMPLATES_LINK: ${{ inputs.templates_link }}
       PRESET_NAME: ${{ inputs.preset_name }}
-      KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
-      KEYSTORE_USER: ${{ secrets.KEYSTORE_USER }}
       DEBUG: ${{ inputs.debug }}
       CACHE: ${{ inputs.cache }}
       FILE_BASENAME: ${{ inputs.file_basename }}
-      CERT_CN: ${{ inputs.cert_cn }}
-      ORG: ${{ inputs.org }}
-      COUNTRY: ${{ inputs.country }}
 
     steps:
       - name: 🛒 Checkout repository
@@ -66,13 +61,14 @@ jobs:
         run: bash .github/scripts/prepare-build.sh
         env:
           GODOT_LINK: ${{ env.GODOT_LINK }}
+          EXPORT_CREDENTIALS: ${{ secrets.EXPORT_CREDENTIALS }}
 
       - name: 📝 Godot Export Templates Cache
         if: env.CACHE == 'true'
         uses: actions/cache@v4
         id: templates-cache
         with:
-          path: ~/.local/share/godot/templates/${{ env.VERSION }}
+          path: ~/.local/share/godot/${{ env.GODOT_MAJOR == '4' && 'export_templates' || 'templates' }}/${{ env.VERSION }}
           key: ${{ runner.os }}-godot-templates-${{ env.VERSION }}
 
       - name: 📥 Download Godot
@@ -85,10 +81,11 @@ jobs:
       - name: 📤 Extract Godot Export Templates
         if: env.CACHE == 'false' || steps.templates-cache.outputs.cache-hit != 'true'
         run: |
+          TEMPLATES_DIR=~/.local/share/godot/$([[ "$GODOT_MAJOR" == "4" ]] && echo "export_templates" || echo "templates")/$VERSION
           curl -L $TEMPLATES_LINK -o godot-templates.tpz
-          mkdir -p ~/.local/share/godot/templates/${{ env.VERSION }}
+          mkdir -p "$TEMPLATES_DIR"
           unzip godot-templates.tpz -d ~/godot-templates
-          mv ~/godot-templates/templates/* ~/.local/share/godot/templates/${{ env.VERSION }}/
+          mv ~/godot-templates/templates/* "$TEMPLATES_DIR"/
           rm -rf ~/godot-templates
 
       - name: ☕ Setup JDK (For Android)
@@ -108,11 +105,11 @@ jobs:
         env:
           DEBUG: ${{ env.DEBUG }}
           PRESET_NAME: ${{ env.PRESET_NAME }}
-          KEYSTORE_USER: ${{ env.KEYSTORE_USER }}
-          KEYSTORE_PASS: ${{ env.KEYSTORE_PASS }}
-          CERT_CN: ${{ env.CERT_CN }}
-          ORG: ${{ env.ORG }}
-          COUNTRY: ${{ env.COUNTRY }}
+          KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
+          KEYSTORE_USER: ${{ secrets.KEYSTORE_USER }}
+          CERT_CN: ${{ inputs.cert_cn }}
+          ORG: ${{ inputs.org }}
+          COUNTRY: ${{ inputs.country }}
           RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
           FILE_BASENAME: ${{ env.FILE_BASENAME }}
 
