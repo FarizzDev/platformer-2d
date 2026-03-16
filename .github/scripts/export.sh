@@ -86,6 +86,13 @@ fi
 
 echo "::group::>>> Packing results..."
 cd export/
-zip -r -7 "../$FILE_BASENAME-build.zip" ./*
+
+if [ "$PRESET_NAME" = $'[ Export All Preset ]\u2063' ]; then
+  zip -r -7 "../${FILE_BASENAME}_$(date +"%Y%m%d-%H%M%S").zip" ./*
+else
+  PRESET_SLUG=$(echo "$preset_name" | tr ' /' '_' | tr '[:upper:]' '[:lower:]')
+  zip -r -7 "../${FILE_BASENAME}_${PRESET_SLUG}_$(date +"%Y%m%d-%H%M%S").zip" ./*
+fi
+
 cd ..
 echo "::endgroup::"
