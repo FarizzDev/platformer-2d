@@ -32,6 +32,11 @@ elif [[ "$DEBUG" == "false" ]]; then
   [ -n "$STATE" ] && DNAME="$DNAME, ST=$STATE"
   [ -n "$COUNTRY" ] && DNAME="$DNAME, C=$COUNTRY"
 
+  echo "::group::>>>>> DEBUG <<<<<"
+  echo $DNAME
+  echo ">>>>>=======<<<<<"
+  echo "::endgroup::"
+
   keytool -genkey -v -noprompt \
     -keystore "$RELEASE_KEYSTORE_PATH" \
     -alias "$KEYSTORE_USER" \
