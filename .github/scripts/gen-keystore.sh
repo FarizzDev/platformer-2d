@@ -2,8 +2,9 @@
 set -e
 
 if [ "$PRESET_NAME" = $'[ Export All Preset ]\u2063' ]; then
-  DEBUG_KEYSTORE_PATH="debug.keystore"
-  RELEASE_KEYSTORE_PATH="release.keystore"
+  FIRST_ANDROID=$(perl .github/scripts/lib/parse_presets.pl all_android | head -1)
+  DEBUG_KEYSTORE_PATH=$(perl .github/scripts/lib/parse_presets.pl keystore "$FIRST_ANDROID" debug)
+  RELEASE_KEYSTORE_PATH=$(perl .github/scripts/lib/parse_presets.pl keystore "$FIRST_ANDROID" release)
 else
   DEBUG_KEYSTORE_PATH=$(perl .github/scripts/lib/parse_presets.pl keystore "$PRESET_NAME" debug)
   RELEASE_KEYSTORE_PATH=$(perl .github/scripts/lib/parse_presets.pl keystore "$PRESET_NAME" release)
@@ -23,12 +24,20 @@ elif [[ "$DEBUG" == "false" ]]; then
   echo ">>> Generating release keystore..."
 
   rm -f "$RELEASE_KEYSTORE_PATH"
+
+  DNAME="CN=${CERT_CN}"
+  [ -n "$ORG" ] && DNAME="$DNAME, O=$ORG"
+  [ -n "$ORG_UNIT" ] && DNAME="$DNAME, OU=$ORG_UNIT"
+  [ -n "$CITY" ] && DNAME="$DNAME, L=$CITY"
+  [ -n "$STATE" ] && DNAME="$DNAME, ST=$STATE"
+  [ -n "$COUNTRY" ] && DNAME="$DNAME, C=$COUNTRY"
+
   keytool -genkey -v -noprompt \
     -keystore "$RELEASE_KEYSTORE_PATH" \
     -alias "$KEYSTORE_USER" \
     -storepass "$KEYSTORE_PASS" \
     -keypass "$KEYSTORE_PASS" \
-    -dname "CN=$CERT_CN,O=$ORG,C=$COUNTRY" \
+    -dname "$DNAME" \
     -keyalg RSA -keysize 2048 -validity 10000
 fi
 
