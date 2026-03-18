@@ -29,7 +29,6 @@ on:
         default: "MyGame"
       cert_cn:
         description: "Certificate CN (e.g., Your Name, Your Company)"
-        required: true
       org:
         description: "Organization for Android (O)"
       org_unit:

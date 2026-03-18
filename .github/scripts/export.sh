@@ -89,10 +89,10 @@ cd export/
 
 RESULT_FILE_NAME=""
 if [ "$PRESET_NAME" = $'[ Export All Preset ]\u2063' ]; then
-  RESULT_FILE_NAME="${FILE_BASENAME}_$(date +"%Y%m%d-%H%M%S").zip"
+  RESULT_FILE_NAME="${FILE_BASENAME}-all_presets_$(date +"%Y%m%d-%H%M%S").zip"
 else
   PRESET_SLUG=$(echo "$PRESET_NAME" | tr ' /' '_' | tr '[:upper:]' '[:lower:]')
-  RESULT_FILE_NAME="${FILE_BASENAME}_${PRESET_SLUG}_$(date +"%Y%m%d-%H%M%S").zip"
+  RESULT_FILE_NAME="${FILE_BASENAME}-${PRESET_SLUG}_$(date +"%Y%m%d-%H%M%S").zip"
 fi
 
 echo "RESULT_FILE_NAME=$RESULT_FILE_NAME" >>"$GITHUB_ENV"
