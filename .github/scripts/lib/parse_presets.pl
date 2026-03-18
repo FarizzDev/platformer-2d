@@ -194,8 +194,7 @@ sub cmd_keystore {
         $path = $creds->{"keystore/$type"} // "";
     }
 
-    my $default = $type eq "debug" ? "debug.keystore" : "release.keystore";
-    print(($path ? $path : $default) . "\n");
+    print($path . "\n");
 }
 
 # --- Main ---
